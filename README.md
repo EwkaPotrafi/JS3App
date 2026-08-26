@@ -19,7 +19,8 @@ sheet after any weighing or equipment change.
 | `js3-profile.json` | The aircraft parameters, as a separate file you can edit or replace. |
 | `sw.js` | Service worker. Caches the app so it opens with no network. |
 | `manifest.webmanifest` | Makes it installable as an app. |
-| `icon-*.png` | Home screen icons. |
+| `icon-*.png` | Home screen icons, generated. |
+| `icon.svg`, `icon-maskable.svg` | Icon sources. Edit these, then `node scripts/generate-icons.mjs`. |
 | `schema.sql` | PostgreSQL schema for the flight database. |
 | `server.js` | Optional sync endpoint, ~120 lines of Express. |
 

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="JS3 weight and balance">
+  <rect width="512" height="512" rx="104" fill="#0C1826"/>
+  <!-- JS3 planform, top-down: pod-and-boom fuselage, 18 m tapered wing, T-tail -->
+  <g fill="#FFFFFF" transform="translate(256,265)">
+    <!-- fuselage: pod forward, slim tail boom aft -->
+    <path d="M0,-172 C10.5,-172 18,-145 18,-106 C18,-73 13.5,-43 10.5,-12
+             C8.5,23 7,66 6.4,107 L6.4,154 L-6.4,154 L-6.4,107
+             C-7,66 -8.5,23 -10.5,-12 C-13.5,-43 -18,-73 -18,-106
+             C-18,-145 -10.5,-172 0,-172 Z"/>
+    <!-- wings: long tapered planform, tip flaring forward into a winglet -->
+    <path d="M14,-66 L214,-50 C227,-53 238,-49 238,-41.5
+             C238,-34.5 228,-30.5 214,-29.8 L12,-19 Z"/>
+    <path d="M-14,-66 L-214,-50 C-227,-53 -238,-49 -238,-41.5
+             C-238,-34.5 -228,-30.5 -214,-29.8 L-12,-19 Z"/>
+    <!-- T-tail: horizontal stabiliser atop the fin -->
+    <path d="M-66,136 L-6,129.5 L6,129.5 L66,136 L66,148.5 L6,145 L-6,145 L-66,148.5 Z"/>
+    <!-- fin, edge-on from above -->
+    <path d="M-5,107 L5,107 L3.8,154 L-3.8,154 Z"/>
+  </g>
+  <!-- centre-of-gravity datum at the wing root -->
+  <circle cx="256" cy="219" r="15.5" fill="#0C1826"/>
+  <circle cx="256" cy="219" r="9.5" fill="#E5A93A"/>
+</svg>
