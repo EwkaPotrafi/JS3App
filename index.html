@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<meta name="theme-color" content="#0C1826">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="W&amp;B">
+<meta name="format-detection" content="telephone=no">
+<title>Weight &amp; Balance</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --paper:#EEF1F5; --panel:#FFFFFF; --panel-2:#F7F9FB;
+  --ink:#0C1826; --ink-2:#4A5C70; --ink-3:#8496A8;
+  --rule:#D8E0EA; --grid:#C8D6E5; --grid-fine:#E4EBF2;
+  --fwd:#2E5FA3; --aft:#8C2F2A; --caution:#B87503; --ok:#14713F;
+  --trace:#6B21A8;
+  --ok-bg:#E3F3EA; --caution-bg:#FCF1DC; --stop-bg:#FBE6E4;
+  --sp:16px; --r:6px;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0B1420; --panel:#131F2D; --panel-2:#0F1A26;
+    --ink:#E8EEF4; --ink-2:#9FB1C4; --ink-3:#6B7F93;
+    --rule:#24344696; --grid:#2C4055; --grid-fine:#1B2A3A;
+    --fwd:#6FA3E0; --aft:#E0736B; --caution:#E5A93A; --ok:#4FBE85;
+    --trace:#B98BE8;
+    --ok-bg:#12301F; --caution-bg:#2E2410; --stop-bg:#331715;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.45;overscroll-behavior-y:none;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-0.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.eyebrow{
+  font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+
+/* ---------- chrome ---------- */
+header{
+  position:sticky;top:0;z-index:30;background:var(--panel);
+  border-bottom:1px solid var(--rule);
+  padding:calc(env(safe-area-inset-top) + 10px) var(--sp) 10px;
+  display:flex;align-items:center;gap:12px;
+}
+header .reg{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.04em}
+header .sub{font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.spacer{flex:1}
+.cfgpick{
+  display:flex;background:var(--panel-2);border:1px solid var(--rule);
+  border-radius:var(--r);overflow:hidden;
+}
+.cfgpick button{
+  padding:7px 11px;font-size:13px;font-weight:600;color:var(--ink-2);
+  font-family:var(--mono);min-height:36px;
+}
+.cfgpick button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.cfgpick button:disabled{opacity:.35;cursor:not-allowed}
+.netdot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.netdot.off{background:var(--ink-3)}
+.netdot.dirty{background:var(--caution)}
+
+main{max-width:760px;margin:0 auto;padding:var(--sp)}
+.view[hidden]{display:none}
+.card{
+  background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);
+  margin-bottom:var(--sp);
+}
+.card>h2{padding:13px var(--sp) 0;font-size:13px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:700}
+
+/* ---------- verdict ---------- */
+.verdict{
+  border-radius:var(--r);padding:14px var(--sp);margin-bottom:var(--sp);
+  border:1px solid transparent;
+}
+.verdict.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.verdict.caution{background:var(--caution-bg);border-color:var(--caution);color:var(--caution)}
+.verdict.stop{background:var(--stop-bg);border-color:var(--aft);color:var(--aft)}
+.verdict .head{font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.15}
+.verdict ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)}
+.verdict li{margin-top:3px}
+.verdict li b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- readouts ---------- */
+.readouts{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.ro{background:var(--panel);padding:11px var(--sp)}
+.ro .k{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.ro .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:21px;font-weight:600;
+  letter-spacing:-0.02em;margin-top:1px}
+.ro .v small{font-size:12px;font-weight:500;color:var(--ink-3);margin-left:3px;letter-spacing:0}
+.ro.dump .v{color:var(--ink-2)}
+.ro-head{background:var(--panel);padding:8px var(--sp) 0;grid-column:1/-1}
+
+/* ---------- plot ---------- */
+.plotwrap{padding:8px 6px 4px}
+svg.plot{display:block;width:100%;height:auto;touch-action:pan-y}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;padding:2px var(--sp) 14px;font-size:11.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:5px}
+.legend .dot{width:9px;height:9px;border-radius:50%;margin-right:5px}
+
+/* ---------- loading table ---------- */
+.rows{padding:4px 0 8px}
+.row{
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;
+  padding:9px var(--sp);border-top:1px solid var(--rule);
+}
+.row:first-child{border-top:none}
+.row.locked{background:var(--panel-2)}
+.row .nm{font-size:14.5px;font-weight:550;line-height:1.25}
+.row .meta{font-size:11px;color:var(--ink-3);font-family:var(--mono);margin-top:2px}
+.row .meta b{color:var(--aft);font-weight:600}
+.stepper{display:flex;align-items:center;gap:0;border:1px solid var(--rule);border-radius:var(--r);
+  overflow:hidden;background:var(--panel-2)}
+.stepper button{width:40px;height:44px;font-size:19px;font-weight:600;color:var(--ink-2);
+  display:flex;align-items:center;justify-content:center}
+.stepper button:active{background:var(--rule)}
+.stepper input{
+  width:74px;height:44px;border:none;border-left:1px solid var(--rule);
+  border-right:1px solid var(--rule);background:var(--panel);
+  text-align:right;padding:0 8px;font-family:var(--mono);font-variant-numeric:tabular-nums;
+  font-size:16px;font-weight:600;-moz-appearance:textfield;
+}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+.stepper input:focus{outline:2px solid var(--fwd);outline-offset:-2px}
+.stepper.over input{color:var(--aft)}
+.locked .val{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:16px;
+  font-weight:600;padding:0 12px;color:var(--ink-2)}
+.fillbtn{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--fwd);padding:6px 2px 6px 10px;min-height:36px}
+.row .ctl{display:flex;align-items:center;justify-content:flex-end}
+@media (max-width:430px){
+  .row{grid-template-columns:1fr}
+  .row .ctl{margin-top:7px}
+  .row .val{padding:0;text-align:right}
+  .row.locked{grid-template-columns:1fr auto}
+}
+
+.bar{display:flex;gap:10px;padding:12px var(--sp);border-top:1px solid var(--rule)}
+.btn{
+  flex:1;min-height:46px;border-radius:var(--r);font-size:15px;font-weight:650;
+  border:1px solid var(--rule);background:var(--panel-2);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.btn.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.4}
+
+/* ---------- forms ---------- */
+.field{padding:10px var(--sp);border-top:1px solid var(--rule);display:grid;
+  grid-template-columns:1fr 150px;align-items:center;gap:10px}
+.field label{font-size:14px}
+.field .hint{font-size:11.5px;color:var(--ink-3);margin-top:1px;line-height:1.3}
+.field input,.field select,.field textarea{
+  width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--rule);
+  border-radius:var(--r);background:var(--panel-2);font-size:16px;
+}
+.field input[type=number],.field input[inputmode=decimal]{font-family:var(--mono);text-align:right}
+.field.wide{grid-template-columns:1fr}
+.field textarea{min-height:70px;resize:vertical;font-size:15px}
+
+/* ---------- log ---------- */
+.flight{padding:12px var(--sp);border-top:1px solid var(--rule);display:grid;
+  grid-template-columns:1fr auto;gap:2px 12px;align-items:start}
+.flight .d{font-family:var(--mono);font-size:13px;font-weight:600}
+.flight .p{font-size:13px;color:var(--ink-2);grid-column:1/-1;
+  font-family:var(--mono);font-variant-numeric:tabular-nums}
+.flight .n{font-size:13px;color:var(--ink-3);grid-column:1/-1;margin-top:2px}
+.flight .del{font-size:12px;color:var(--aft);padding:4px 0 4px 12px;min-height:32px}
+.empty{padding:28px var(--sp);text-align:center;color:var(--ink-3);font-size:14px}
+.empty b{display:block;color:var(--ink-2);font-size:15px;margin-bottom:4px}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);
+  border-top:1px solid var(--rule);display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+  backdrop-filter:saturate(1.6) blur(12px);
+}
+nav button{
+  flex:1;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);
+  min-height:56px;justify-content:center;
+}
+nav button[aria-current="true"]{color:var(--ink)}
+nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;top:6px;margin-left:22px;width:7px;height:7px;border-radius:50%;
+  background:var(--caution)}
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(74px + env(safe-area-inset-bottom));z-index:60;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:20px;
+  font-size:13.5px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;
+  max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1}
+.note{padding:10px var(--sp) 14px;font-size:12px;color:var(--ink-3);line-height:1.45}
+/* SVG: presentation attributes do not reliably resolve var(); use classes. */
+svg .gm{stroke:var(--grid);stroke-width:1}
+svg .gf{stroke:var(--grid-fine);stroke-width:.6}
+svg .ax{fill:var(--ink-3);font-size:11px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+svg .axl{fill:var(--ink-3);font-size:11.5px;letter-spacing:.08em}
+svg .envfill{fill:var(--fwd);fill-opacity:.06;stroke:none}
+svg .cautfill{fill:var(--caution);fill-opacity:.18;stroke:none}
+svg .lfwd{fill:none;stroke:var(--fwd);stroke-width:2.2;stroke-linejoin:round}
+svg .laft{fill:none;stroke:var(--aft);stroke-width:2.2;stroke-linejoin:round}
+svg .lcaut{fill:none;stroke:var(--caution);stroke-width:1.4;stroke-dasharray:5 4}
+svg .ghost{fill:var(--trace);fill-opacity:.3;stroke:none}
+svg .trace{stroke:var(--trace);stroke-width:1.6;stroke-dasharray:3 3;opacity:.85}
+svg .ptout{fill:var(--panel);stroke-width:2.6}
+svg .ptin{stroke:var(--panel);stroke-width:2}
+svg .sc{fill:var(--fwd);fill-opacity:.7;stroke:var(--panel);stroke-width:1.5}
+svg .fit{fill:none;stroke:var(--trace);stroke-width:1.6;stroke-dasharray:6 4}
+svg .msg{fill:var(--ink-3);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="reg" id="hdrReg">—</div>
+    <div class="sub" id="hdrSub">—</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="cfgpick" id="cfgPick"></div>
+  <div class="netdot" id="netDot" title="Storage &amp; sync status"></div>
+</header>
+
+<main>
+  <!-- ============ LOAD ============ -->
+  <section class="view" id="v-load">
+    <div class="verdict" id="verdict"><div class="head">Loading…</div></div>
+
+    <div class="card">
+      <div class="plotwrap"><svg class="plot" id="plot" role="img" aria-label="Centre of gravity envelope"></svg></div>
+      <div class="legend" id="legend"></div>
+      <div class="readouts" id="readouts"></div>
+    </div>
+
+    <div class="card">
+      <h2>Loading points</h2>
+      <div class="rows" id="rows"></div>
+      <div class="bar">
+        <button class="btn" id="btnReset">Clear loads</button>
+        <button class="btn primary" id="btnSave">Save this flight</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cockpit placard — pilot + parachute</h2>
+      <div class="readouts" id="placard"></div>
+      <p class="note">Placard limits assume a constant-CG limit line and ignore the mass
+      cut-offs, exactly as the Jonker sheet computes them. The envelope check above is the
+      binding one.</p>
+    </div>
+  </section>
+
+  <!-- ============ LOG ============ -->
+  <section class="view" id="v-log" hidden>
+    <div class="card" id="saveCard" hidden>
+      <h2>Save flight</h2>
+      <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="field"><label>Launch site</label><input type="text" id="f-site" placeholder="EHSE"></div>
+      <div class="field"><label>Duration <span class="hint">hours</span></label>
+        <input inputmode="decimal" id="f-dur" placeholder="0.0"></div>
+      <div class="field"><label>Distance flown <span class="hint">km, task or OLC</span></label>
+        <input inputmode="decimal" id="f-dist" placeholder="0"></div>
+      <div class="field"><label>Conditions</label>
+        <select id="f-cond">
+          <option value="">—</option><option>Weak (&lt;1 m/s)</option>
+          <option>Moderate (1–2 m/s)</option><option>Strong (2–3 m/s)</option>
+          <option>Very strong (&gt;3 m/s)</option><option>Ridge</option><option>Wave</option>
+        </select></div>
+      <div class="field wide"><label>Notes</label>
+        <textarea id="f-notes" placeholder="Dumped ballast at 14:20, climb rate fell off in the blue…"></textarea></div>
+      <div class="bar">
+        <button class="btn" id="btnCancelSave">Cancel</button>
+        <button class="btn primary" id="btnConfirmSave">Save flight</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Flight log</h2>
+      <div id="flightList"></div>
+      <div class="bar">
+        <button class="btn" id="btnExport">Export CSV</button>
+        <button class="btn" id="btnSync">Sync now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRENDS ============ -->
+  <section class="view" id="v-trends" hidden>
+    <div class="card">
+      <h2>Speed against wing loading</h2>
+      <div class="plotwrap"><svg class="plot" id="tPerf"></svg></div>
+      <p class="note" id="tPerfNote"></p>
+    </div>
+    <div class="card">
+      <h2>Where you have flown the envelope</h2>
+      <div class="plotwrap"><svg class="plot" id="tEnv"></svg></div>
+      <p class="note">Every saved take-off point on this configuration. Dense clusters show
+      the loading you actually trust; empty regions show what the glider can do and you have not
+      tried.</p>
+    </div>
+    <div class="card">
+      <h2>Wing loading over time</h2>
+      <div class="plotwrap"><svg class="plot" id="tTime"></svg></div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP ============ -->
+  <section class="view" id="v-setup" hidden>
+    <div class="card">
+      <h2>Aircraft</h2>
+      <div class="field"><label>Registration</label><input id="s-reg"></div>
+      <div class="field"><label>Serial number</label><input id="s-sn"></div>
+      <div class="field"><label>Wing area <span class="hint">m², this configuration</span></label>
+        <input inputmode="decimal" id="s-area"></div>
+    </div>
+
+    <div class="card">
+      <h2>Last weighing — this configuration</h2>
+      <div class="field"><label>M1 — main wheel <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-m1"></div>
+      <div class="field"><label>M2 — tail wheel <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-m2"></div>
+      <div class="field"><label>x — main to tail wheel <span class="hint">mm</span></label>
+        <input inputmode="decimal" id="s-x"></div>
+      <div class="field"><label>c <span class="hint">mm, datum constant</span></label>
+        <input inputmode="decimal" id="s-c"></div>
+      <div class="field"><label>d <span class="hint">mm, datum constant</span></label>
+        <input inputmode="decimal" id="s-d"></div>
+      <div class="field"><label>Weighing date</label><input type="date" id="s-wdate"></div>
+      <div class="readouts" id="emptyOut"></div>
+      <p class="note">Empty CG = b·M2/(M1+M2) + a, with b = √(x² − d²) and a = c − b.
+      Change these only after a fresh weighing, and only from the signed weighing report.</p>
+    </div>
+
+    <div class="card">
+      <h2>Envelope limits — this configuration</h2>
+      <div class="field"><label>Max take-off mass <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-mauw"></div>
+      <div class="field"><label>Minimum mass on chart <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-minmass"></div>
+      <div class="field"><label>Forward limit <span class="hint">mm, below the knee</span></label>
+        <input inputmode="decimal" id="s-fwd"></div>
+      <div class="field"><label>Forward knee mass <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-knee"></div>
+      <div class="field"><label>Forward limit at MTOM <span class="hint">mm</span></label>
+        <input inputmode="decimal" id="s-upf"></div>
+      <div class="field"><label>Aft limit <span class="hint">mm</span></label>
+        <input inputmode="decimal" id="s-aft"></div>
+      <div class="field"><label>Caution zone width <span class="hint">kg·m inboard of aft limit</span></label>
+        <input inputmode="decimal" id="s-caut"></div>
+      <div class="field"><label>Max non-lifting mass <span class="hint">kg</span></label>
+        <input inputmode="decimal" id="s-nonlift"></div>
+    </div>
+
+    <div class="card">
+      <h2>Sync</h2>
+      <div class="field wide"><label>Server address <span class="hint">Leave empty to keep every
+        flight on this device only. Flights are always written locally first.</span></label>
+        <input id="s-endpoint" placeholder="https://…/api/flights" autocapitalize="off" spellcheck="false"></div>
+      <div class="field wide"><label>Access token</label>
+        <input id="s-token" type="password" autocapitalize="off" spellcheck="false"></div>
+      <div class="bar"><button class="btn" id="btnSync2">Sync now</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Aircraft profile</h2>
+      <div class="bar">
+        <button class="btn" id="btnCfgExport">Export profile</button>
+        <button class="btn" id="btnCfgImport">Import profile</button>
+      </div>
+      <p class="note">The profile holds every arm, limit and loading point. Export it to move
+      this calculator to another glider, or to keep a copy alongside your flight manual.
+      <span id="verline"></span></p>
+    </div>
+
+    <div class="card">
+      <h2>Before you rely on this</h2>
+      <p class="note">This app reproduces the arms, limits and formulas in
+      <b>JS3 Weight and Balance Calculator v14</b> for the serial number in the profile. It is a
+      convenience tool, not an approved document. The signed weighing report and the flight
+      manual are authoritative. Re-check the numbers against the manufacturer's sheet after any
+      weighing, any equipment change, and after any change to this profile.</p>
+    </div>
+  </section>
+</main>
+
+<nav id="nav"></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   1. AIRCRAFT PROFILE  —  every number below comes from
+      "JS3 Weight and Balance Calculator v14 03072.xlsx" (Jonker Sailplanes).
+      Nothing in the calculation engine is hard-coded; it all reads from here.
+   ========================================================================== */
+const DEFAULT_PROFILE = {
+  schemaVersion: 1,
+  source: "JS3 Weight and Balance Calculator v14, doc JSMD 3 rev 14, 2019-09-11",
+  aircraft: {
+    type: "JS3 / JS-MD 3", registration: "N70JT", serial: "03-072",
+    buildYear: 2019, spanVariant: "18m only",
+    datum: "Wing leading edge at root rib",
+    attitude: "1000:18 at top of tail cone"
+  },
+  activeConfig: "18m",
+  configurations: {
+    "18m": {
+      label: "18m", enabled: true, wingArea: 9.87,
+      weighing: { M1:284, M2:33.8, x:4337, c:4419, d:509,
+                  date:"2019-10-09", inspector:"Rowan Hill" },
+      limits: {
+        mauw: 600, minMass: 325, fwdArm: 270, fwdKneeMass: 400,
+        fwdArmAtMauw: 319, aftArm: 398, cautionOffset: 14.876,
+        maxNonLifting: 313, emptyNonLifting: 163.1
+      },
+      loadingPoints: [
+        { id:"Tot",      name:"Empty aircraft",              max:400,  armSource:"emptyCG", locked:true },
+        { id:"Pilot",    name:"Pilot + parachute",           max:115,  arm:-645,   step:1,   nonLifting:true },
+        { id:"TailLB",   name:"Tail lead ballast (fixed)",   max:6.67, arm:4120.93,step:0.5, nonLifting:true, hidden:true },
+        { id:"H2OMain",  name:"Water ballast — main",        max:156,  armPoly:"h2oMain", step:5, expendable:true },
+        { id:"H2OTips",  name:"Water ballast — tips",        max:34,   arm:480,    step:2,   expendable:true },
+        { id:"Tail1",    name:"Expendable tail tank",        max:5.9,  arm:4285,   step:0.5, expendable:true, nonLifting:true },
+        { id:"Tail2",    name:"Non-expendable tail tank",    max:8.9,  arm:4510,   step:0.5, nonLifting:true },
+        { id:"TailW",    name:"Brass tail wheel (extra)",    max:2,    arm:4556,   step:0.5, nonLifting:true },
+        { id:"TailB",    name:"Tail battery",                max:0,    arm:0,      step:0.5, nonLifting:true },
+        { id:"Bag",      name:"Baggage compartment",         max:2,    arm:150,    step:0.5, nonLifting:true },
+        { id:"O2",       name:"Oxygen bottle",               max:2,    arm:0,      step:0.5, nonLifting:true },
+        { id:"FF",       name:"Jet fuel — top tank",         max:5.5,  arm:500.4,  step:0.5, nonLifting:true },
+        { id:"FR",       name:"Jet fuel — bottom tank",      max:11.5, arm:852.5,  step:0.5, nonLifting:true },
+        { id:"Other",    name:"Removable weight behind seat",max:20,   arm:-225,   step:1,   nonLifting:true }
+      ]
+    },
+    "15m": {
+      label: "15m", enabled: false, wingArea: 8.71,
+      weighing: { M1:null, M2:null, x:4337, c:4419, d:509, date:"", inspector:"" },
+      limits: {
+        mauw: 525, minMass: 325, fwdArm: 270, fwdKneeMass: 400,
+        fwdArmAtMauw: 305, aftArm: 390, cautionOffset: 14.875,
+        maxNonLifting: 320, emptyNonLifting: 163.1
+      },
+      loadingPoints: [
+        { id:"Tot",      name:"Empty aircraft",              max:400,  armSource:"emptyCG", locked:true },
+        { id:"Pilot",    name:"Pilot + parachute",           max:115,  arm:-645,   step:1,   nonLifting:true },
+        { id:"TailLB",   name:"Tail lead ballast (fixed)",   max:6.67, arm:4120.93,step:0.5, nonLifting:true, hidden:true },
+        { id:"H2OMain",  name:"Water ballast — main",        max:156,  arm:247,    step:5,   expendable:true },
+        { id:"Tail1",    name:"Expendable tail tank",        max:5.9,  arm:4285,   step:0.5, expendable:true, nonLifting:true },
+        { id:"Tail2",    name:"Non-expendable tail tank",    max:8.9,  arm:4510,   step:0.5, nonLifting:true },
+        { id:"TailW",    name:"Brass tail wheel (extra)",    max:2,    arm:4556,   step:0.5, nonLifting:true },
+        { id:"TailB",    name:"Tail battery",                max:0,    arm:0,      step:0.5, nonLifting:true },
+        { id:"Bag",      name:"Baggage compartment",         max:2,    arm:150,    step:0.5, nonLifting:true },
+        { id:"O2",       name:"Oxygen bottle",               max:2,    arm:0,      step:0.5, nonLifting:true },
+        { id:"FF",       name:"Jet fuel — top tank",         max:5.5,  arm:500.4,  step:0.5, nonLifting:true },
+        { id:"FR",       name:"Jet fuel — bottom tank",      max:11.5, arm:852.5,  step:0.5, nonLifting:true },
+        { id:"Other",    name:"Removable weight behind seat",max:20,   arm:-225,   step:1,   nonLifting:true }
+      ]
+    }
+  },
+  // Arms that move with the load. Coefficients ascending: c0 + c1·m + c2·m² …
+  armPolynomials: {
+    h2oMain: {
+      note: "Main wing tank CG travel, JS3 sheet 'Main Water Ballast'",
+      pieces: [
+        { upTo: 1.674, coeffs: [-55.7009900990091, 153.465346534654] },
+        { upTo: null,  coeffs: [195.415953292905, 4.57788786636922, -0.138637060615541,
+                                0.00226864992823323, -0.000020616514935014,
+                                9.50302625981645e-8, -1.71511793130427e-10] }
+      ]
+    }
+  },
+  sync: { endpoint: "", token: "" }
+};
+
+/* ==========================================================================
+   2. CALCULATION ENGINE  —  pure functions, no DOM, no storage.
+   ========================================================================== */
+const Calc = {
+  evalPoly(poly, m){
+    for (const p of poly.pieces){
+      if (p.upTo === null || m <= p.upTo)
+        return p.coeffs.reduce((s,c,i)=> s + c*Math.pow(m,i), 0);
+    }
+    return 0;
+  },
+  emptyAircraft(w){
+    if (w.M1 == null || w.M2 == null || !w.x || !w.d) return null;
+    const b = Math.sqrt(w.x*w.x - w.d*w.d);
+    const a = w.c - b;
+    const mass = w.M1 + w.M2;
+    if (!mass) return null;
+    const cg = b*w.M2/mass + a;
+    return { a, b, mass, cg, moment: mass*cg/1000 };
+  },
+  armOf(pt, mass, ctx, profile){
+    if (pt.armSource === "emptyCG") return ctx.emptyCG;
+    if (pt.armPoly) return Calc.evalPoly(profile.armPolynomials[pt.armPoly], mass);
+    return pt.arm;
+  },
+  /* Envelope as two polylines in (mass, moment). Reproduces the Config sheet exactly. */
+  envelope(L){
+    const fwd = [
+      [L.minMass,     L.minMass*L.fwdArm/1000],
+      [L.fwdKneeMass, L.fwdKneeMass*L.fwdArm/1000],
+      [L.mauw,        L.mauw*L.fwdArmAtMauw/1000]
+    ];
+    const aft = [
+      [L.minMass, L.minMass*L.aftArm/1000],
+      [L.mauw,    L.mauw*L.aftArm/1000]
+    ];
+    const caution = aft.map(([m,q]) => [m, q - L.cautionOffset]);
+    return { fwd, aft, caution };
+  },
+  interp(line, mass){
+    if (mass <= line[0][0]) return line[0][1];
+    const last = line[line.length-1];
+    if (mass >= last[0]) return last[1];
+    for (let i=0;i<line.length-1;i++){
+      const [m0,q0] = line[i], [m1,q1] = line[i+1];
+      if (mass >= m0 && mass <= m1) return q0 + (q1-q0)*(mass-m0)/(m1-m0);
+    }
+    return last[1];
+  },
+  /* The whole state for one loading, both conditions. */
+  compute(profile, cfgKey, loads){
+    const cfg = profile.configurations[cfgKey];
+    const L = cfg.limits;
+    const empty = Calc.emptyAircraft(cfg.weighing);
+    const ctx = { emptyCG: empty ? empty.cg : 0 };
+    const items = cfg.loadingPoints.map(pt => {
+      const mass = pt.armSource === "emptyCG"
+        ? (empty ? empty.mass : 0)
+        : (Number(loads[pt.id]) || 0);
+      const arm = Calc.armOf(pt, mass, ctx, profile);
+      return { pt, mass, arm, moment: mass*arm/1000, over: mass > pt.max + 1e-9 };
+    });
+    const sum = (f) => items.reduce((s,it)=> s + (f(it) ? it.mass : 0), 0);
+    const summom = (f) => items.reduce((s,it)=> s + (f(it) ? it.moment : 0), 0);
+
+    const mk = (filter) => {
+      const mass = sum(filter), moment = summom(filter);
+      return { mass, moment, cg: mass ? moment/mass*1000 : 0,
+               wingLoading: cfg.wingArea ? mass/cfg.wingArea : 0 };
+    };
+    const loaded = mk(()=>true);
+    const dumped = mk(it => !it.pt.expendable);
+    const nonLifting = L.emptyNonLifting +
+      items.reduce((s,it)=> s + (it.pt.nonLifting ? it.mass : 0), 0);
+
+    const env = Calc.envelope(L);
+    const check = (st) => {
+      const fwdMom = Calc.interp(env.fwd, st.mass);
+      const aftMom = Calc.interp(env.aft, st.mass);
+      const cautMom = aftMom - L.cautionOffset;
+      return {
+        ...st, fwdMom, aftMom, cautMom,
+        fwdCg: st.mass ? fwdMom/st.mass*1000 : 0,
+        aftCg: L.aftArm,
+        overMauw: st.mass > L.mauw + 1e-9,
+        underMin: st.mass < L.minMass - 1e-9,
+        tooFwd: st.moment < fwdMom - 1e-9,
+        tooAft: st.moment > aftMom + 1e-9,
+        caution: st.moment > cautMom && st.moment <= aftMom + 1e-9,
+        marginAft: aftMom - st.moment,
+        marginFwd: st.moment - fwdMom
+      };
+    };
+    return {
+      cfgKey, cfg, limits: L, empty, items, env,
+      loaded: check(loaded), dumped: check(dumped),
+      nonLifting, overNonLifting: nonLifting > L.maxNonLifting + 1e-9,
+      overRows: items.filter(i=>i.over),
+      placard: Calc.placard(profile, cfgKey, empty)
+    };
+  },
+  /* Cockpit placard pilot range — the W&B Report Metric N/O column formulas. */
+  placard(profile, cfgKey, empty){
+    const cfg = profile.configurations[cfgKey], L = cfg.limits;
+    if (!empty) return null;
+    const P = cfg.loadingPoints.find(p=>p.id==="Pilot");
+    if (!P) return null;
+    const pa = P.arm, We = empty.mass, CGe = empty.cg;
+    const fuel = cfg.loadingPoints.filter(p=>p.id==="FF"||p.id==="FR");
+    const t2 = cfg.loadingPoints.find(p=>p.id==="Tail2");
+    const contrib = (arm, mx, limit) => (arm-limit)/(limit-pa)*mx;
+    const minBase = We*(CGe-L.aftArm)/(L.aftArm-pa) +
+                    fuel.reduce((s,p)=> s + contrib(p.arm, p.max, L.aftArm), 0);
+    const maxBase = We*(CGe-L.fwdArm)/(L.fwdArm-pa);
+    const out = {
+      minEmpty: minBase,
+      maxEmpty: Math.min(maxBase, P.max),
+      minFull: t2 ? minBase + contrib(t2.arm, t2.max, L.aftArm) : minBase,
+      maxFull: t2 ? Math.min(maxBase + contrib(t2.arm, t2.max, L.fwdArmAtMauw), P.max)
+                  : Math.min(maxBase, P.max)
+    };
+    return out;
+  }
+};
+
+/* ==========================================================================
+   3. STORAGE  —  IndexedDB, with an in-memory fallback so the app never dies.
+   ========================================================================== */
+const DB = (() => {
+  const NAME = "glider-wb", VER = 2;
+  let db = null, mem = { flights: new Map(), kv: new Map() }, useMem = false;
+
+  function open(){
+    return new Promise(res => {
+      let req;
+      try { req = indexedDB.open(NAME, VER); }
+      catch(e){ useMem = true; return res(); }
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains("flights")){
+          const s = d.createObjectStore("flights", { keyPath: "id" });
+          s.createIndex("date", "date");
+          s.createIndex("dirty", "dirty");
+        }
+        if (!d.objectStoreNames.contains("kv")) d.createObjectStore("kv");
+      };
+      req.onsuccess = () => { db = req.result; res(); };
+      req.onerror = () => { useMem = true; res(); };
+      setTimeout(()=>{ if(!db && !useMem){ useMem = true; res(); } }, 2500);
+    });
+  }
+  const tx = (store, mode) => db.transaction(store, mode).objectStore(store);
+  const wrap = (r) => new Promise((res, rej) => { r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+
+  return {
+    open, get isMemory(){ return useMem; },
+    async putFlight(f){
+      if (useMem || !db){ mem.flights.set(f.id, f); return f; }
+      await wrap(tx("flights","readwrite").put(f)); return f;
+    },
+    async delFlight(id){
+      if (useMem || !db){ mem.flights.delete(id); return; }
+      await wrap(tx("flights","readwrite").delete(id));
+    },
+    async allFlights(){
+      if (useMem || !db) return [...mem.flights.values()].sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+      const r = await wrap(tx("flights","readonly").getAll());
+      return r.sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+    },
+    async setKV(k,v){
+      if (useMem || !db){ mem.kv.set(k,v); return; }
+      await wrap(tx("kv","readwrite").put(v,k));
+    },
+    async getKV(k){
+      if (useMem || !db) return mem.kv.get(k);
+      return await wrap(tx("kv","readonly").get(k));
+    }
+  };
+})();
+
+/* ==========================================================================
+   4. SYNC  —  local first, push what is dirty, pull what is newer.
+   ========================================================================== */
+const Sync = {
+  async run(silent){
+    const s = State.profile.sync;
+    if (!s.endpoint){ if(!silent) toast("No server set. Flights stay on this device."); return; }
+    if (!navigator.onLine){ if(!silent) toast("Offline — will sync when back online."); return; }
+    try{
+      const hdr = { "Content-Type":"application/json" };
+      if (s.token) hdr["Authorization"] = "Bearer " + s.token;
+      const all = await DB.allFlights();
+      const dirty = all.filter(f => f.dirty);
+      if (dirty.length){
+        const r = await fetch(s.endpoint, { method:"POST", headers:hdr,
+          body: JSON.stringify({ flights: dirty.map(f => ({...f, dirty: undefined})) }) });
+        if (!r.ok) throw new Error("push " + r.status);
+        for (const f of dirty){ f.dirty = false; await DB.putFlight(f); }
+      }
+      const since = (await DB.getKV("syncCursor")) || "1970-01-01T00:00:00Z";
+      const r2 = await fetch(s.endpoint + "?since=" + encodeURIComponent(since), { headers: hdr });
+      if (r2.ok){
+        const data = await r2.json();
+        for (const f of (data.flights || [])){
+          const local = all.find(x => x.id === f.id);
+          if (!local || (f.updatedAt || "") > (local.updatedAt || ""))
+            await DB.putFlight({ ...f, dirty:false });
+        }
+        await DB.setKV("syncCursor", new Date().toISOString());
+      }
+      if (!silent) toast("Synced.");
+      await refreshLog(); paintNet();
+    } catch(e){
+      if (!silent) toast("Sync failed — flights are safe on this device.");
+      console.warn("[sync]", e);
+    }
+  }
+};
+
+/* ==========================================================================
+   5. STATE + UI
+   ========================================================================== */
+const State = { profile: null, loads: {}, flights: [], view: "load", pendingSave: null };
+const $ = (s) => document.querySelector(s);
+const clone = (o) => (typeof structuredClone === "function")
+  ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+const fmt = (n, d=1) => (n==null || !isFinite(n)) ? "—" : n.toFixed(d);
+
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=> t.classList.remove("show"), 2400);
+}
+function deepMerge(base, over){
+  if (Array.isArray(over) || typeof over !== "object" || over === null) return over;
+  const out = Array.isArray(base) ? [...base] : { ...base };
+  for (const k in over) out[k] = (k in base) ? deepMerge(base[k], over[k]) : over[k];
+  return out;
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  await DB.open();
+  const stored = await DB.getKV("profile");
+  State.profile = stored ? deepMerge(DEFAULT_PROFILE, stored) : clone(DEFAULT_PROFILE);
+  // optional external profile file — lets you ship a different glider without touching the app
+  try{
+    const r = await fetch("js3-profile.json", { cache: "no-cache" });
+    if (r.ok && !stored) State.profile = deepMerge(State.profile, await r.json());
+  }catch(e){/* offline or absent: embedded profile stands */}
+
+  State.loads = (await DB.getKV("loads")) || {};
+  State.flights = await DB.allFlights();
+
+  buildNav(); buildConfigPicker(); buildRows(); fillSetup();
+  render(); refreshLog();
+
+  addEventListener("online",  ()=>{ paintNet(); Sync.run(true); });
+  addEventListener("offline", paintNet);
+  paintNet();
+  Sync.run(true);
+
+  if ("serviceWorker" in navigator){
+    try { navigator.serviceWorker.register("sw.js"); } catch(e){}
+  }
+}
+
+/* ---------- nav ---------- */
+const ICONS = {
+  load:'<path d="M3 17l6-6 4 4 8-8"/><path d="M3 21h18"/>',
+  log:'<path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/>',
+  trends:'<path d="M4 19V5M4 19h16"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  setup:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
+};
+function buildNav(){
+  const items = [["load","Load"],["log","Log"],["trends","Trends"],["setup","Setup"]];
+  $("#nav").innerHTML = items.map(([k,l]) =>
+    `<button data-view="${k}" aria-current="${k===State.view}">
+       <svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join("");
+  $("#nav").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    go(b.dataset.view);
+  };
+}
+function go(v){
+  State.view = v;
+  for (const k of ["load","log","trends","setup"]) $("#v-"+k).hidden = (k !== v);
+  $("#nav").querySelectorAll("button").forEach(b =>
+    b.setAttribute("aria-current", String(b.dataset.view === v)));
+  scrollTo({ top: 0 });
+  if (v === "trends") drawTrends();
+  if (v === "log") refreshLog();
+}
+
+/* ---------- config picker ---------- */
+function buildConfigPicker(){
+  const p = State.profile;
+  $("#cfgPick").innerHTML = Object.entries(p.configurations).map(([k,c]) =>
+    `<button data-cfg="${k}" aria-pressed="${k===p.activeConfig}"
+      title="${c.enabled?c.label:"No weighing data for "+c.label+" yet"}"
+      >${c.label}${c.enabled?"":" ·"}</button>`).join("");
+  $("#cfgPick").onclick = async (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    State.profile.activeConfig = b.dataset.cfg;
+    await DB.setKV("profile", State.profile);
+    buildConfigPicker(); buildRows(); fillSetup(); render();
+  };
+}
+
+/* ---------- loading rows ---------- */
+function buildRows(){
+  const cfg = State.profile.configurations[State.profile.activeConfig];
+  const empty = Calc.emptyAircraft(cfg.weighing);
+  $("#rows").innerHTML = cfg.loadingPoints.filter(p => !p.hidden).map(p => {
+    if (p.locked){
+      return `<div class="row locked">
+        <div><div class="nm">${p.name}</div>
+          <div class="meta">arm ${empty?fmt(empty.cg,1):"—"} mm · from last weighing</div></div>
+        <div class="val">${empty?fmt(empty.mass,1):"—"}</div></div>`;
+    }
+    const armTxt = p.armPoly ? "arm varies with fill" : `arm ${fmt(p.arm,1)} mm`;
+    return `<div class="row" data-id="${p.id}">
+      <div><div class="nm">${p.name}</div>
+        <div class="meta" data-meta="${p.id}">max ${fmt(p.max,2)} kg · ${armTxt}</div></div>
+      <div class="ctl">
+        <button class="fillbtn" data-fill="${p.id}">Full</button>
+        <div class="stepper" data-st="${p.id}">
+          <button data-step="${p.id}" data-dir="-1" aria-label="less ${p.name}">−</button>
+          <input inputmode="decimal" data-in="${p.id}" value="${State.loads[p.id] ?? ""}"
+                 placeholder="0" aria-label="${p.name} kg">
+          <button data-step="${p.id}" data-dir="1" aria-label="more ${p.name}">+</button>
+        </div>
+      </div></div>`;
+  }).join("");
+
+  $("#rows").oninput = (e) => {
+    const id = e.target.dataset.in; if (!id) return;
+    setLoad(id, e.target.value, false);
+  };
+  $("#rows").onclick = (e) => {
+    const st = e.target.closest("[data-step]");
+    if (st){
+      const id = st.dataset.step;
+      const pt = cfg.loadingPoints.find(p=>p.id===id);
+      const cur = Number(State.loads[id]) || 0;
+      let v = cur + Number(st.dataset.dir) * (pt.step || 1);
+      v = Math.max(0, Math.min(pt.max, Math.round(v*100)/100));
+      setLoad(id, v, true); return;
+    }
+    const fl = e.target.closest("[data-fill]");
+    if (fl){
+      const pt = cfg.loadingPoints.find(p=>p.id===fl.dataset.fill);
+      setLoad(pt.id, pt.max, true);
+    }
+  };
+}
+function setLoad(id, val, repaintInput){
+  const n = val === "" ? "" : Number(val);
+  State.loads[id] = (n === "" || isNaN(n)) ? "" : n;
+  if (repaintInput){
+    const el = $(`[data-in="${id}"]`); if (el) el.value = State.loads[id];
+  }
+  DB.setKV("loads", State.loads);
+  render();
+}
+
+/* ---------- render ---------- */
+function render(){
+  const p = State.profile, key = p.activeConfig;
+  const cfg = p.configurations[key];
+  $("#hdrReg").textContent = p.aircraft.registration || "—";
+  $("#hdrSub").textContent = `${p.aircraft.type} · ${p.aircraft.serial}`;
+
+  const R = Calc.compute(p, key, State.loads);
+  State.last = R;
+
+  paintVerdict(R); paintReadouts(R); paintPlacard(R); drawEnvelope(R);
+
+  // per-row over-max flags
+  for (const it of R.items){
+    if (it.pt.locked || it.pt.hidden) continue;
+    const st = $(`[data-st="${it.pt.id}"]`); if (st) st.classList.toggle("over", it.over);
+    const mt = $(`[data-meta="${it.pt.id}"]`);
+    if (mt){
+      const armTxt = it.pt.armPoly ? `arm ${fmt(it.arm,1)} mm at this fill` : `arm ${fmt(it.pt.arm,1)} mm`;
+      mt.innerHTML = it.over
+        ? `<b>over max ${fmt(it.pt.max,2)} kg</b> · ${armTxt}`
+        : `max ${fmt(it.pt.max,2)} kg · ${armTxt}`;
+    }
+  }
+}
+
+function paintVerdict(R){
+  const v = $("#verdict"); const msgs = []; let level = "ok";
+  const bad = (t)=>{ msgs.push(t); level = "stop"; };
+  const warn = (t)=>{ msgs.push(t); if (level!=="stop") level = "caution"; };
+
+  if (!R.empty){ v.className = "verdict stop";
+    v.innerHTML = `<div class="head">No weighing data</div>
+      <ul><li>Enter M1, M2 and x under Setup before using this calculator.</li></ul>`;
+    return; }
+
+  for (const it of R.overRows)
+    bad(`${it.pt.name} is ${fmt(it.mass,1)} kg — max is ${fmt(it.pt.max,2)} kg.`);
+
+  const label = { loaded:"Ready for take-off", dumped:"After dumping ballast" };
+  for (const k of ["loaded","dumped"]){
+    const s = R[k];
+    if (s.overMauw) bad(`${label[k]}: ${fmt(s.mass,1)} kg exceeds MTOM of ${fmt(R.limits.mauw,0)} kg by ${fmt(s.mass-R.limits.mauw,1)} kg.`);
+    if (s.underMin) warn(`${label[k]}: ${fmt(s.mass,1)} kg is below the ${fmt(R.limits.minMass,0)} kg bottom of the chart.`);
+    if (s.tooAft)  bad(`${label[k]}: CG ${fmt(s.cg,1)} mm is aft of the ${fmt(R.limits.aftArm,0)} mm limit.`);
+    if (s.tooFwd)  bad(`${label[k]}: CG ${fmt(s.cg,1)} mm is forward of the limit (${fmt(s.fwdCg,1)} mm at ${fmt(s.mass,1)} kg).`);
+    if (!s.tooAft && s.caution) warn(`${label[k]}: CG ${fmt(s.cg,1)} mm is in the caution zone, ${fmt(s.marginAft,2)} kg·m from the aft limit.`);
+  }
+  if (R.overNonLifting)
+    bad(`Non-lifting mass ${fmt(R.nonLifting,1)} kg exceeds the ${fmt(R.limits.maxNonLifting,0)} kg limit.`);
+
+  v.className = "verdict " + level;
+  const head = level === "ok" ? "Within limits"
+             : level === "caution" ? "Within limits — caution"
+             : "Out of limits";
+  const summary = `<li>Take-off: <b>${fmt(R.loaded.mass,1)} kg</b> at <b>${fmt(R.loaded.cg,1)} mm</b>${
+      level==="ok" ? `, ${fmt(R.loaded.marginAft,2)} kg·m from the aft limit` : ""
+    }. After dumping: <b>${fmt(R.dumped.mass,1)} kg</b> at <b>${fmt(R.dumped.cg,1)} mm</b>.</li>`;
+  v.innerHTML = `<div class="head">${head}</div>` +
+    `<ul>${msgs.map(m=>`<li>${m}</li>`).join("")}${summary}</ul>`;
+}
+
+function paintReadouts(R){
+  const row = (k,val,unit,cls="") =>
+    `<div class="ro ${cls}"><div class="k">${k}</div>
+      <div class="v">${val}<small>${unit}</small></div></div>`;
+  $("#readouts").innerHTML =
+    `<div class="ro-head"><span class="eyebrow">Ready for take-off</span></div>` +
+    row("Mass", fmt(R.loaded.mass,1), "kg") +
+    row("CG", fmt(R.loaded.cg,1), "mm") +
+    row("Wing loading", fmt(R.loaded.wingLoading,1), "kg/m²") +
+    row("Moment", fmt(R.loaded.moment,1), "kg·m") +
+    `<div class="ro-head"><span class="eyebrow">Expendable ballast dumped</span></div>` +
+    row("Mass", fmt(R.dumped.mass,1), "kg", "dump") +
+    row("CG", fmt(R.dumped.cg,1), "mm", "dump") +
+    row("Wing loading", fmt(R.dumped.wingLoading,1), "kg/m²", "dump") +
+    row("Non-lifting", fmt(R.nonLifting,1), `/ ${fmt(R.limits.maxNonLifting,0)} kg`, "dump");
+}
+
+function paintPlacard(R){
+  const p = R.placard;
+  if (!p){ $("#placard").innerHTML = ""; return; }
+  const row = (k,a,b) => `<div class="ro"><div class="k">${k}</div>
+    <div class="v">${fmt(a,1)}–${fmt(b,1)}<small>kg</small></div></div>`;
+  $("#placard").innerHTML =
+    row("Non-exp. tank empty", p.minEmpty, p.maxEmpty) +
+    row("Non-exp. tank full",  p.minFull,  p.maxFull);
+}
+
+/* ---------- envelope plot ---------- */
+function drawEnvelope(R, target, opts){
+  opts = opts || {};
+  const svg = target || $("#plot");
+  const L = R.limits, env = R.env;
+  const W = 620, H = 430, m = { l:52, r:16, t:14, b:44 };
+
+  const allQ = [...env.fwd, ...env.aft].map(d=>d[1]);
+  const q0 = Math.floor((Math.min(...allQ) - 12)/10)*10;
+  const q1 = Math.ceil((Math.max(...allQ) + 12)/10)*10;
+  const y0 = L.minMass - 25, y1 = L.mauw + 25;
+  const X = q => m.l + (q - q0)/(q1 - q0) * (W - m.l - m.r);
+  const Y = kg => H - m.b - (kg - y0)/(y1 - y0) * (H - m.t - m.b);
+  const path = pts => pts.map(([kg,q],i)=> (i?"L":"M") + X(q).toFixed(1) + " " + Y(kg).toFixed(1)).join(" ");
+
+  let g = "";
+  // grid
+  for (let q = q0; q <= q1; q += 10){
+    const major = q % 50 === 0;
+    g += `<line class="${major?'gm':'gf'}" x1="${X(q)}" y1="${m.t}" x2="${X(q)}" y2="${H-m.b}"/>`;
+    if (major) g += `<text class="ax" x="${X(q)}" y="${H-m.b+16}" text-anchor="middle">${q}</text>`;
+  }
+  for (let kg = Math.ceil(y0/25)*25; kg <= y1; kg += 25){
+    const major = kg % 50 === 0;
+    g += `<line class="${major?'gm':'gf'}" x1="${m.l}" y1="${Y(kg)}" x2="${W-m.r}" y2="${Y(kg)}"/>`;
+    if (major) g += `<text class="ax" x="${m.l-7}" y="${Y(kg)+4}" text-anchor="end">${kg}</text>`;
+  }
+  g += `<text class="axl" x="${(m.l+W-m.r)/2}" y="${H-6}" text-anchor="middle">MOMENT (kg·m)</text>`;
+  g += `<text class="axl" x="13" y="${(m.t+H-m.b)/2}" text-anchor="middle"
+    transform="rotate(-90 13 ${(m.t+H-m.b)/2})">MASS (kg)</text>`;
+
+  // envelope fill
+  const poly = [...env.fwd, ...[...env.aft].reverse()];
+  g += `<path class="envfill" d="${path(poly)} Z"/>`;
+  // caution band: between caution line and aft line
+  const cband = [...env.caution, ...[...env.aft].reverse()];
+  g += `<path class="cautfill" d="${path(cband)} Z"/>`;
+  // boundaries
+  g += `<path class="lfwd" d="${path(env.fwd)}"/>`;
+  g += `<path class="laft" d="${path(env.aft)}"/>`;
+  g += `<path class="lcaut" d="${path(env.caution)}"/>`;
+  // closing edges: bottom belongs to the aft boundary, top to the forward one
+  g += `<path class="laft" d="${path([env.fwd[0], env.aft[0]])}"/>`;
+  g += `<path class="lfwd" d="${path([env.fwd[env.fwd.length-1], env.aft[env.aft.length-1]])}"/>`;
+
+  // history ghosts
+  if (opts.history){
+    for (const f of opts.history)
+      g += `<circle class="ghost" cx="${X(f.moment)}" cy="${Y(f.mass)}" r="4"/>`;
+  }
+
+  // the trace: loaded -> dumped
+  if (!opts.hidePoint && R.empty){
+    const a = R.loaded, b = R.dumped;
+    const col = (s) => s.tooFwd||s.tooAft||s.overMauw ? "var(--aft)"
+                     : s.caution ? "var(--caution)" : "var(--ok)";
+    g += `<line class="trace" x1="${X(a.moment)}" y1="${Y(a.mass)}" x2="${X(b.moment)}" y2="${Y(b.mass)}"/>`;
+    g += `<circle class="ptout" cx="${X(b.moment)}" cy="${Y(b.mass)}" r="6" style="stroke:${col(b)}"/>`;
+    g += `<circle class="ptin" cx="${X(a.moment)}" cy="${Y(a.mass)}" r="7.5" style="fill:${col(a)}"/>`;
+  }
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = g;
+
+  if (!target){
+    $("#legend").innerHTML = `
+      <span><i style="background:var(--fwd)"></i>Forward limit</span>
+      <span><i style="background:var(--aft)"></i>Aft limit ${fmt(L.aftArm,0)} mm</span>
+      <span><i style="background:var(--caution)"></i>Caution zone</span>
+      <span><i class="dot" style="background:var(--ok)"></i>Take-off</span>
+      <span><i class="dot" style="background:var(--panel);border:2px solid var(--ok)"></i>After dumping</span>`;
+  }
+}
+
+/* ==========================================================================
+   6. FLIGHT LOG
+   ========================================================================== */
+$("#btnSave").onclick = () => {
+  const R = State.last;
+  if (!R || !R.empty) return toast("Enter weighing data first.");
+  State.pendingSave = R;
+  $("#f-date").value = new Date().toISOString().slice(0,10);
+  $("#saveCard").hidden = false;
+  go("log");
+};
+$("#btnCancelSave").onclick = () => { $("#saveCard").hidden = true; };
+$("#btnConfirmSave").onclick = async () => {
+  const R = State.pendingSave || State.last; if (!R) return;
+  const dur = Number($("#f-dur").value) || null;
+  const dist = Number($("#f-dist").value) || null;
+  const f = {
+    id: (crypto.randomUUID ? crypto.randomUUID()
+         : Date.now() + "-" + Math.random().toString(36).slice(2)),
+    date: $("#f-date").value || new Date().toISOString().slice(0,10),
+    site: $("#f-site").value.trim(),
+    registration: State.profile.aircraft.registration,
+    serial: State.profile.aircraft.serial,
+    config: R.cfgKey,
+    mass: +R.loaded.mass.toFixed(2),
+    moment: +R.loaded.moment.toFixed(3),
+    cg: +R.loaded.cg.toFixed(2),
+    wingLoading: +R.loaded.wingLoading.toFixed(2),
+    dumpedMass: +R.dumped.mass.toFixed(2),
+    dumpedCg: +R.dumped.cg.toFixed(2),
+    waterMain: Number(State.loads.H2OMain) || 0,
+    waterTips: Number(State.loads.H2OTips) || 0,
+    pilot: Number(State.loads.Pilot) || 0,
+    loads: { ...State.loads },
+    durationH: dur, distanceKm: dist,
+    avgSpeed: (dur && dist) ? +(dist/dur).toFixed(1) : null,
+    conditions: $("#f-cond").value,
+    notes: $("#f-notes").value.trim(),
+    updatedAt: new Date().toISOString(),
+    dirty: true
+  };
+  await DB.putFlight(f);
+  State.flights = await DB.allFlights();
+  $("#saveCard").hidden = true;
+  ["#f-site","#f-dur","#f-dist","#f-notes"].forEach(s => $(s).value = "");
+  $("#f-cond").value = "";
+  toast("Flight saved.");
+  refreshLog(); paintNet(); Sync.run(true);
+};
+
+async function refreshLog(){
+  State.flights = await DB.allFlights();
+  const list = $("#flightList");
+  if (!State.flights.length){
+    list.innerHTML = `<div class="empty"><b>No flights yet</b>
+      Set your loading, then tap “Save this flight”. Each entry builds the trends.</div>`;
+    return;
+  }
+  list.innerHTML = State.flights.map(f => `
+    <div class="flight">
+      <div class="d">${f.date}${f.site ? " · " + f.site : ""}</div>
+      <button class="del" data-del="${f.id}">Delete</button>
+      <div class="p">${fmt(f.mass,1)} kg · ${fmt(f.wingLoading,1)} kg/m² · CG ${fmt(f.cg,1)} mm
+        ${f.avgSpeed ? " · " + fmt(f.avgSpeed,1) + " km/h" : ""}${f.dirty ? " · not synced" : ""}</div>
+      ${f.notes ? `<div class="n">${f.notes.replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}</div>` : ""}
+    </div>`).join("");
+  list.onclick = async (e) => {
+    const b = e.target.closest("[data-del]"); if (!b) return;
+    if (!confirm("Delete this flight from this device?")) return;
+    await DB.delFlight(b.dataset.del);
+    await refreshLog(); toast("Flight deleted.");
+  };
+}
+
+$("#btnExport").onclick = () => {
+  const cols = ["date","site","registration","config","mass","cg","moment","wingLoading",
+    "dumpedMass","dumpedCg","pilot","waterMain","waterTips","durationH","distanceKm",
+    "avgSpeed","conditions","notes"];
+  const esc = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+  const csv = [cols.join(",")].concat(
+    State.flights.map(f => cols.map(c => esc(f[c])).join(","))).join("\n");
+  download(`flights-${State.profile.aircraft.registration}.csv`, csv, "text/csv");
+};
+$("#btnSync").onclick = () => Sync.run(false);
+$("#btnSync2").onclick = () => Sync.run(false);
+$("#btnReset").onclick = () => {
+  const cfg = State.profile.configurations[State.profile.activeConfig];
+  for (const p of cfg.loadingPoints) if (!p.locked) State.loads[p.id] = "";
+  DB.setKV("loads", State.loads); buildRows(); render(); toast("Loads cleared.");
+};
+
+function download(name, text, mime){
+  const b = new Blob([text], { type: mime });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement("a");
+  a.href = u; a.download = name; a.click();
+  setTimeout(()=> URL.revokeObjectURL(u), 3000);
+}
+
+/* ==========================================================================
+   7. TRENDS
+   ========================================================================== */
+function scatter(svg, pts, xlab, ylab, opts){
+  opts = opts || {};
+  const W = 620, H = 320, m = { l:52, r:16, t:14, b:44 };
+  svg._slope = null;
+  if (!pts.length){
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `<text class="msg" x="${W/2}" y="${H/2}" text-anchor="middle">Not enough flights yet</text>`;
+    return;
+  }
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const pad = (a,b)=>{ const d=(b-a)||1; return [a-d*0.1, b+d*0.1]; };
+  const [x0,x1] = pad(Math.min(...xs), Math.max(...xs));
+  const [y0,y1] = pad(Math.min(...ys), Math.max(...ys));
+  const X = v => m.l + (v-x0)/(x1-x0)*(W-m.l-m.r);
+  const Y = v => H-m.b - (v-y0)/(y1-y0)*(H-m.t-m.b);
+  let g = "";
+  for (let i=0;i<=4;i++){
+    const v = y0 + (y1-y0)*i/4;
+    g += `<line class="gf" x1="${m.l}" y1="${Y(v)}" x2="${W-m.r}" y2="${Y(v)}"/>
+      <text class="ax" x="${m.l-7}" y="${Y(v)+4}" text-anchor="end">${v.toFixed(0)}</text>`;
+  }
+  for (let i=0;i<=4;i++){
+    const v = x0 + (x1-x0)*i/4;
+    g += `<line class="gf" x1="${X(v)}" y1="${m.t}" x2="${X(v)}" y2="${H-m.b}"/>
+      <text class="ax" x="${X(v)}" y="${H-m.b+16}" text-anchor="middle">${v.toFixed(opts.xdec ?? 0)}</text>`;
+  }
+  // least-squares fit
+  if (pts.length >= 3 && opts.fit){
+    const n = pts.length, sx = xs.reduce((a,b)=>a+b,0), sy = ys.reduce((a,b)=>a+b,0);
+    const sxy = pts.reduce((a,p)=>a+p.x*p.y,0), sxx = pts.reduce((a,p)=>a+p.x*p.x,0);
+    const den = n*sxx - sx*sx;
+    if (Math.abs(den) > 1e-9){
+      const b1 = (n*sxy - sx*sy)/den, b0 = (sy - b1*sx)/n;
+      g += `<line class="fit" x1="${X(x0)}" y1="${Y(b0+b1*x0)}" x2="${X(x1)}" y2="${Y(b0+b1*x1)}"/>`;
+      svg._slope = b1;
+    }
+  }
+  for (const p of pts)
+    g += `<circle class="sc" cx="${X(p.x)}" cy="${Y(p.y)}" r="5"><title>${p.t || ""}</title></circle>`;
+  g += `<text class="axl" x="${(m.l+W-m.r)/2}" y="${H-6}" text-anchor="middle">${xlab}</text>`;
+  g += `<text class="axl" x="13" y="${(m.t+H-m.b)/2}" text-anchor="middle"
+    transform="rotate(-90 13 ${(m.t+H-m.b)/2})">${ylab}</text>`;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = g;
+}
+
+function drawTrends(){
+  const key = State.profile.activeConfig;
+  const fl = State.flights.filter(f => f.config === key);
+
+  const perf = fl.filter(f => f.avgSpeed && f.wingLoading)
+    .map(f => ({ x:f.wingLoading, y:f.avgSpeed, t:`${f.date} · ${f.avgSpeed} km/h` }));
+  const svg = $("#tPerf");
+  scatter(svg, perf, "WING LOADING (kg/m²)", "AVERAGE SPEED (km/h)", { fit:true, xdec:0 });
+  $("#tPerfNote").textContent = perf.length < 4
+    ? `${perf.length} flight${perf.length===1?"":"s"} with both a distance and a duration. Log a few more before reading anything into the line.`
+    : (svg._slope != null
+        ? `Fitted slope: ${svg._slope.toFixed(2)} km/h per kg/m². Conditions drive far more of this than ballast does, so treat the line as a hint and compare flights in similar conditions.`
+        : "");
+
+  drawEnvelope(Calc.compute(State.profile, key, {}), $("#tEnv"),
+    { hidePoint:true, history: fl.map(f => ({ mass:f.mass, moment:f.moment })) });
+
+  const time = fl.filter(f=>f.date).map(f => ({
+    x: new Date(f.date).getTime()/86400000, y: f.wingLoading, t: f.date }))
+    .sort((a,b)=>a.x-b.x);
+  scatter($("#tTime"), time, "DAYS", "WING LOADING (kg/m²)", { xdec:0 });
+}
+
+/* ==========================================================================
+   8. SETUP
+   ========================================================================== */
+function fillSetup(){
+  const p = State.profile, cfg = p.configurations[p.activeConfig], L = cfg.limits, w = cfg.weighing;
+  const set = (id,v) => { const e = $(id); if (e) e.value = (v ?? ""); };
+  set("#s-reg", p.aircraft.registration); set("#s-sn", p.aircraft.serial);
+  set("#s-area", cfg.wingArea);
+  set("#s-m1", w.M1); set("#s-m2", w.M2); set("#s-x", w.x); set("#s-c", w.c); set("#s-d", w.d);
+  set("#s-wdate", w.date);
+  set("#s-mauw", L.mauw); set("#s-minmass", L.minMass); set("#s-fwd", L.fwdArm);
+  set("#s-knee", L.fwdKneeMass); set("#s-upf", L.fwdArmAtMauw); set("#s-aft", L.aftArm);
+  set("#s-caut", L.cautionOffset); set("#s-nonlift", L.maxNonLifting);
+  set("#s-endpoint", p.sync.endpoint); set("#s-token", p.sync.token);
+  $("#verline").textContent = "Loaded from: " + p.source;
+  paintEmptyOut();
+}
+function paintEmptyOut(){
+  const cfg = State.profile.configurations[State.profile.activeConfig];
+  const e = Calc.emptyAircraft(cfg.weighing);
+  const row = (k,v,u) => `<div class="ro"><div class="k">${k}</div>
+    <div class="v">${v}<small>${u}</small></div></div>`;
+  $("#emptyOut").innerHTML = e
+    ? row("Empty mass", fmt(e.mass,1), "kg") + row("Empty CG", fmt(e.cg,1), "mm") +
+      row("Empty moment", fmt(e.moment,1), "kg·m") + row("b", fmt(e.b,1), "mm")
+    : row("Empty mass","—","") + row("Empty CG","—","");
+}
+const SETUP_MAP = {
+  "#s-reg":["aircraft","registration","s"], "#s-sn":["aircraft","serial","s"],
+  "#s-area":["cfg","wingArea","n"],
+  "#s-m1":["weighing","M1","n"], "#s-m2":["weighing","M2","n"], "#s-x":["weighing","x","n"],
+  "#s-c":["weighing","c","n"], "#s-d":["weighing","d","n"], "#s-wdate":["weighing","date","s"],
+  "#s-mauw":["limits","mauw","n"], "#s-minmass":["limits","minMass","n"],
+  "#s-fwd":["limits","fwdArm","n"], "#s-knee":["limits","fwdKneeMass","n"],
+  "#s-upf":["limits","fwdArmAtMauw","n"], "#s-aft":["limits","aftArm","n"],
+  "#s-caut":["limits","cautionOffset","n"], "#s-nonlift":["limits","maxNonLifting","n"],
+  "#s-endpoint":["sync","endpoint","s"], "#s-token":["sync","token","s"]
+};
+for (const sel in SETUP_MAP){
+  const el = $(sel); if (!el) continue;
+  el.addEventListener("change", async () => {
+    const [where, key, type] = SETUP_MAP[sel];
+    const raw = el.value.trim();
+    const val = type === "n" ? (raw === "" ? null : Number(raw)) : raw;
+    if (type === "n" && raw !== "" && isNaN(val)) return toast("That is not a number.");
+    const p = State.profile, cfg = p.configurations[p.activeConfig];
+    if (where === "aircraft") p.aircraft[key] = val;
+    else if (where === "sync") p.sync[key] = val;
+    else if (where === "cfg") cfg[key] = val;
+    else cfg[where][key] = val;
+    if (where === "weighing") cfg.enabled = (cfg.weighing.M1 != null && cfg.weighing.M2 != null);
+    await DB.setKV("profile", p);
+    buildConfigPicker(); buildRows(); paintEmptyOut(); render();
+  });
+}
+$("#btnCfgExport").onclick = () => download(
+  `wb-profile-${State.profile.aircraft.registration}.json`,
+  JSON.stringify(State.profile, null, 2), "application/json");
+$("#btnCfgImport").onclick = () => {
+  const i = document.createElement("input");
+  i.type = "file"; i.accept = "application/json,.json";
+  i.onchange = async () => {
+    const f = i.files[0]; if (!f) return;
+    try{
+      const j = JSON.parse(await f.text());
+      if (!j.configurations) throw new Error("not a profile");
+      State.profile = deepMerge(DEFAULT_PROFILE, j);
+      await DB.setKV("profile", State.profile);
+      buildConfigPicker(); buildRows(); fillSetup(); render();
+      toast("Profile loaded. Check every limit before you fly.");
+    }catch(e){ toast("That file is not a valid profile."); }
+  };
+  i.click();
+};
+
+/* ---------- status dot ---------- */
+async function paintNet(){
+  const d = $("#netDot");
+  const dirty = (await DB.allFlights()).some(f => f.dirty);
+  d.className = "netdot" + (!navigator.onLine ? " off" : dirty ? " dirty" : "");
+  d.title = !navigator.onLine ? "Offline — everything still works, flights save locally"
+          : dirty ? "Flights waiting to sync" : "Up to date";
+}
+
+boot();
+</script>
+</body>
+</html>
