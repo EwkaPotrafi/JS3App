@@ -1,0 +1,78 @@
+name: Deploy to seedbox
+
+# The app is static — no build, no dependencies — so this just stages the
+# runtime files and ships them. The tarball-over-stdin shape is forced by the
+# seedbox deploy key; see README, "Deploying to the seedbox".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail with something readable rather than an opaque ssh error.
+      - name: Check the deploy key is configured
+        env:
+          DEPLOY_KEY: ${{ secrets.SEEDBOX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::error::Secret SEEDBOX_DEPLOY_KEY is not set on this repository."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret."
+            echo "Use the same key value as the janskiairplane repo."
+            exit 1
+          fi
+
+      # The seedbox deploy key is pinned to a forced command that extracts the
+      # tarball into one fixed directory, so the only way to target a
+      # subdirectory is to carry it inside the archive.
+      - name: Stage the app under js3/
+        run: |
+          mkdir -p _site/js3
+          cp index.html js3-profile.json manifest.webmanifest sw.js _site/js3/
+          cp icon-180.png icon-192.png icon-512.png icon-maskable-512.png _site/js3/
+          echo "Staged $(find _site -type f | wc -l) files, $(du -sh _site | cut -f1)."
+
+      - name: Write deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.SEEDBOX_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Fingerprint only — never the key itself.
+          ssh-keygen -l -f ~/.ssh/deploy_key || {
+            echo "::error::Key is malformed - ssh cannot parse it."; exit 1; }
+
+      - name: Deploy
+        run: |
+          tar -czf - -C _site . | timeout 300 ssh \
+            -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=accept-new \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            jackbr4@narvi.whatbox.ca
+          echo "Tarball sent."
+
+      - name: Verify the live site is actually this app
+        run: |
+          url=http://narvi.whatbox.ca:8790/js3
+          body=$(curl -fsS --retry 3 --retry-delay 2 "$url/")
+          # A 200 alone proves nothing — a stale page also returns 200.
+          if ! grep -q "Weight &amp; Balance" <<<"$body"; then
+            echo "::error::$url/ returned 200 but is not this app. Served:"
+            echo "$body" | head -20
+            exit 1
+          fi
+          curl -fsS -o /dev/null "$url/manifest.webmanifest"
+          curl -fsS -o /dev/null "$url/js3-profile.json"
+          echo "✓ $url/ is serving this build (index, manifest, profile OK)"

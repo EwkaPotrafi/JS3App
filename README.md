@@ -42,6 +42,30 @@ S3. Drop the folder in and you are done. Two rules:
 
 Locally: `python3 -m http.server 8080`, then open `http://localhost:8080`.
 
+### Deploying to the seedbox
+
+`.github/workflows/deploy.yml` ships the app to the seedbox on every push to
+`main`, serving it at <http://narvi.whatbox.ca:8790/js3/>.
+
+The deploy key there is pinned to a forced command that extracts a gzipped
+tarball from stdin into one fixed directory — it ignores whatever command the
+client asks for, which is why this is `tar | ssh` and not `rsync`, and why the
+`js3/` subdirectory has to be carried *inside* the archive rather than chosen
+with a flag.
+
+It needs one secret: **`SEEDBOX_DEPLOY_KEY`**, the same private key the
+`janskiairplane` repo uses. Settings -> Secrets and variables -> Actions.
+
+Two caveats:
+
+- **Port 8790 is plain HTTP, so the service worker will not register there.**
+  The app runs, but not offline — which is the one thing it exists to do. Use
+  the GitHub Pages URL on the phone until the seedbox has TLS.
+- The app currently extracts *inside* the `janskiairplane` web root. If that
+  deploy is ever changed to clear its target directory first, it will take
+  `js3/` with it. A second deploy key with its own forced command would
+  separate them properly.
+
 ### Install on iPhone
 Open the URL in **Safari** (not Chrome — on iOS only Safari can install a web
 app), tap Share → *Add to Home Screen*. It then launches full-screen with no
