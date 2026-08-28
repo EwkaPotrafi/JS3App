@@ -1,6 +1,8 @@
 /* Service worker: the app shell is cached on install so it opens with no network at all.
    Bump CACHE when you change any shell file, or browsers will serve the old one. */
-const CACHE = "glider-wb-v1";
+const CACHE = "glider-wb-v3";
+// Bump CACHE above on every shell change; the app ships from main on push,
+// so a forgotten bump leaves phones on the previous build.
 const SHELL = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-180.png",
@@ -32,7 +34,10 @@ self.addEventListener("fetch", (e) => {
   // Shell: cache first, so an airfield with no signal still opens the app instantly.
   e.respondWith(
     caches.match(req).then(hit => {
-      const net = fetch(req).then(res => {
+      // Revalidate against the server, not the browser's HTTP cache: a stale
+      // hit there would be written straight back into this cache, pinning the
+      // old build in place. Still cache-first, so offline is unaffected.
+      const net = fetch(req, { cache: "no-cache" }).then(res => {
         if (res && res.status === 200 && res.type === "basic")
           caches.open(CACHE).then(c => c.put(req, res.clone()));
         return res;
