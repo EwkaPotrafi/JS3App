@@ -67,7 +67,8 @@
           "max": 156,
           "armPoly": "h2oMain",
           "step": 5,
-          "expendable": true
+          "expendable": true,
+          "volume": true
         },
         {
           "id": "H2OTips",
@@ -75,7 +76,8 @@
           "max": 34,
           "arm": 480,
           "step": 2,
-          "expendable": true
+          "expendable": true,
+          "volume": true
         },
         {
           "id": "Tail1",
@@ -207,7 +209,8 @@
           "max": 156,
           "arm": 247,
           "step": 5,
-          "expendable": true
+          "expendable": true,
+          "volume": true
         },
         {
           "id": "Tail1",
@@ -303,8 +306,8 @@
             4.57788786636922,
             -0.138637060615541,
             0.00226864992823323,
-            -0.000020616514935014,
-            9.50302625981645e-8,
+            -2.0616514935014e-05,
+            9.50302625981645e-08,
             -1.71511793130427e-10
           ]
         }

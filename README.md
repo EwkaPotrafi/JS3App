@@ -127,6 +127,28 @@ then drop `server.js` entirely and point the app at PostgREST.
 
 ---
 
+## Units
+
+Setup → Units switches the whole app between metric and imperial. Imperial
+shows weights in lb, arms and CG in inches, wing loading in lb/ft², moment in
+lb·in×10³, task speed in knots and distance in statute miles. Water ballast
+switches to **US gallons**, since it is filled by volume rather than weighed.
+
+This is a display setting and nothing more. Every limit in the profile is
+Jonker's, in kg and mm, and all the arithmetic — the empty-CG solve, the
+envelope, every limit comparison — runs in those units whatever is on screen.
+Loads, saved flights and the profile are stored metric too. Switching units
+can therefore never change whether a loading is legal; converting before a
+comparison could have let display rounding decide a go/no-go, which is why it
+does not happen.
+
+Typed values are converted on entry, so you can enter a weighing report in
+lb and inches without touching a calculator. A loading point is treated as a
+volume when its profile entry carries `"volume": true`.
+
+CSV export stays metric regardless, because its column names (`distanceKm`,
+and the rest) name their units.
+
 ## Re-parametrizing
 
 Nothing about the JS3 is hard-coded in the engine. `js3-profile.json` holds it
