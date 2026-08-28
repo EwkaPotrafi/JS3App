@@ -721,7 +721,11 @@ const State = { profile: null, loads: {}, flights: [], view: "load", pendingSave
 const $ = (s) => document.querySelector(s);
 const clone = (o) => (typeof structuredClone === "function")
   ? structuredClone(o) : JSON.parse(JSON.stringify(o));
-const fmt = (n, d=1) => (n==null || !isFinite(n)) ? "—" : n.toFixed(d);
+const fmt = (n, d=1) => {
+  // a synced row can arrive with numbers as strings, depending on the server
+  if (typeof n === "string") n = parseFloat(n);
+  return (n==null || !isFinite(n)) ? "—" : n.toFixed(d);
+};
 
 function toast(msg){
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");

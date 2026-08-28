@@ -7,7 +7,14 @@
      POST /api/flights               <- { flights: [...] }   upsert, last write wins
 */
 const express = require("express");
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
+
+// node-postgres hands back numeric as a string (to protect precision it does
+// not need here) and date as a JS Date, which JSON.stringify turns into a full
+// timestamp. The app wants plain numbers and a bare YYYY-MM-DD, so parse them
+// into what the wire format should have carried all along.
+types.setTypeParser(1700, (v) => (v === null ? null : parseFloat(v))); // numeric
+types.setTypeParser(1082, (v) => v);                                   // date
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const TOKEN = process.env.WB_TOKEN;
