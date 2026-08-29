@@ -23,12 +23,11 @@ jobs:
       # Fail with something readable rather than an opaque ssh error.
       - name: Check the deploy key is configured
         env:
-          DEPLOY_KEY: ${{ secrets.SEEDBOX_DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.JS3_DEPLOY_KEY }}
         run: |
           if [ -z "$DEPLOY_KEY" ]; then
-            echo "::error::Secret SEEDBOX_DEPLOY_KEY is not set on this repository."
+            echo "::error::Secret JS3_DEPLOY_KEY is not set on this repository."
             echo "Settings -> Secrets and variables -> Actions -> New repository secret."
-            echo "Use the same key value as the janskiairplane repo."
             exit 1
           fi
 
@@ -57,7 +56,7 @@ jobs:
 
       - name: Write deploy key
         env:
-          DEPLOY_KEY: ${{ secrets.SEEDBOX_DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.JS3_DEPLOY_KEY }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
