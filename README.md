@@ -221,13 +221,18 @@ Both the take-off point *and* the ballast-dumped point, against:
 
 ---
 
-## One thing to confirm with Jonker
+## Provenance of the awkward numbers
 
-**`emptyNonLifting` is 163.1 kg**, from the fuselage (158) plus tailplane (5.1)
-on the component list. The workbook's own non-lifting total is suppressed for an
-18 m-only aircraft, so there is nothing to check it against. Verify it before
-treating that particular limit as binding.
+Two values did not follow cleanly from the workbook. Both are now settled, and
+are recorded here so neither gets re-litigated from the spreadsheet alone.
 
-(The workbook's other loose end — the 15 m sheet using a fixed 247 mm arm for
-the main water tank where the 18 m sheet uses the polynomial — no longer
-applies, since the 15 m configuration has been removed.)
+**`emptyNonLifting` = 163.1 kg — confirmed.** Fuselage (158) plus tailplane
+(5.1) from the component list. The workbook suppresses its own non-lifting
+total for an 18 m-only aircraft, so the sheet cannot corroborate it; the value
+was checked against Jonker's notes and is correct. The non-lifting mass check
+is therefore binding and can be trusted.
+
+**The 15 m main tank arm — no longer applicable.** The 15 m sheet used a fixed
+247 mm arm where the 18 m sheet uses the polynomial. This airframe is 18 m
+only, so the 15 m configuration has been removed and the discrepancy is
+unreachable.
