@@ -1,6 +1,6 @@
 /* Service worker: the app shell is cached on install so it opens with no network at all.
    Bump CACHE when you change any shell file, or browsers will serve the old one. */
-const CACHE = "glider-wb-v3";
+const CACHE = "glider-wb-v4";
 // Bump CACHE above on every shell change; the app ships from main on push,
 // so a forgotten bump leaves phones on the previous build.
 const SHELL = [

@@ -182,8 +182,10 @@ which is why it re-draws correctly for any aircraft:
 }
 ```
 
-This reproduces Jonker's `Config` sheet vertex-for-vertex, for both the 18 m and
-15 m envelopes.
+This reproduces Jonker's `Config` sheet vertex-for-vertex. The engine takes any
+number of configurations; this aircraft is 18 m only, so it ships with one, and
+the configuration switch in the header hides itself when there is nothing to
+switch between.
 
 **Arms that move.** Most loading points have a fixed arm. The main wing tank
 does not — its CG travels as the tank fills, so its arm is a 6th-order
@@ -217,21 +219,15 @@ Both the take-off point *and* the ballast-dumped point, against:
 - non-lifting mass
 - per-item maximum load
 
-The 15 m configuration ships defined but unweighed, as a worked example of a
-second configuration. Enter M1 and M2 for it under Setup and it becomes live.
-
 ---
 
-## Two things to confirm with Jonker
+## One thing to confirm with Jonker
 
-Faithfulness to the source beat consistency wherever the two disagreed, so
-these carry through from the workbook rather than being smoothed over:
+**`emptyNonLifting` is 163.1 kg**, from the fuselage (158) plus tailplane (5.1)
+on the component list. The workbook's own non-lifting total is suppressed for an
+18 m-only aircraft, so there is nothing to check it against. Verify it before
+treating that particular limit as binding.
 
-1. **The 15 m sheet uses a fixed 247 mm arm for the main water tank; the 18 m
-   sheet uses the polynomial.** At full tanks the two agree to 0.1 mm, so it
-   makes no practical difference, but it looks like the 15 m sheet simply was
-   not updated. The profile reproduces both as found.
-2. **`emptyNonLifting` is 163.1 kg**, from the fuselage (158) plus tailplane
-   (5.1) on the component list. The workbook's own non-lifting total is
-   suppressed for an 18 m-only aircraft, so there is nothing to check it
-   against. Verify it before treating that particular limit as binding.
+(The workbook's other loose end — the 15 m sheet using a fixed 247 mm arm for
+the main water tank where the 18 m sheet uses the polynomial — no longer
+applies, since the 15 m configuration has been removed.)

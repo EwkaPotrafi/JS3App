@@ -427,7 +427,7 @@ svg .msg{fill:var(--ink-3);font-size:14px}
       Nothing in the calculation engine is hard-coded; it all reads from here.
    ========================================================================== */
 const DEFAULT_PROFILE = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   source: "JS3 Weight and Balance Calculator v14, doc JSMD 3 rev 14, 2019-09-11",
   aircraft: {
     type: "JS3 / JS-MD 3", registration: "N70JT", serial: "03-072",
@@ -452,30 +452,6 @@ const DEFAULT_PROFILE = {
         { id:"TailLB",   name:"Tail lead ballast (fixed)",   max:6.67, arm:4120.93,step:0.5, nonLifting:true, hidden:true },
         { id:"H2OMain",  name:"Water ballast — main",        max:156,  armPoly:"h2oMain", step:5, expendable:true },
         { id:"H2OTips",  name:"Water ballast — tips",        max:34,   arm:480,    step:2,   expendable:true },
-        { id:"Tail1",    name:"Expendable tail tank",        max:5.9,  arm:4285,   step:0.5, expendable:true, nonLifting:true },
-        { id:"Tail2",    name:"Non-expendable tail tank",    max:8.9,  arm:4510,   step:0.5, nonLifting:true },
-        { id:"TailW",    name:"Brass tail wheel (extra)",    max:2,    arm:4556,   step:0.5, nonLifting:true },
-        { id:"TailB",    name:"Tail battery",                max:0,    arm:0,      step:0.5, nonLifting:true },
-        { id:"Bag",      name:"Baggage compartment",         max:2,    arm:150,    step:0.5, nonLifting:true },
-        { id:"O2",       name:"Oxygen bottle",               max:2,    arm:0,      step:0.5, nonLifting:true },
-        { id:"FF",       name:"Jet fuel — top tank",         max:5.5,  arm:500.4,  step:0.5, nonLifting:true },
-        { id:"FR",       name:"Jet fuel — bottom tank",      max:11.5, arm:852.5,  step:0.5, nonLifting:true },
-        { id:"Other",    name:"Removable weight behind seat",max:20,   arm:-225,   step:1,   nonLifting:true }
-      ]
-    },
-    "15m": {
-      label: "15m", enabled: false, wingArea: 8.71,
-      weighing: { M1:null, M2:null, x:4337, c:4419, d:509, date:"", inspector:"" },
-      limits: {
-        mauw: 525, minMass: 325, fwdArm: 270, fwdKneeMass: 400,
-        fwdArmAtMauw: 305, aftArm: 390, cautionOffset: 14.875,
-        maxNonLifting: 320, emptyNonLifting: 163.1
-      },
-      loadingPoints: [
-        { id:"Tot",      name:"Empty aircraft",              max:400,  armSource:"emptyCG", locked:true },
-        { id:"Pilot",    name:"Pilot + parachute",           max:115,  arm:-645,   step:1,   nonLifting:true },
-        { id:"TailLB",   name:"Tail lead ballast (fixed)",   max:6.67, arm:4120.93,step:0.5, nonLifting:true, hidden:true },
-        { id:"H2OMain",  name:"Water ballast — main",        max:156,  arm:247,    step:5,   expendable:true },
         { id:"Tail1",    name:"Expendable tail tank",        max:5.9,  arm:4285,   step:0.5, expendable:true, nonLifting:true },
         { id:"Tail2",    name:"Non-expendable tail tank",    max:8.9,  arm:4510,   step:0.5, nonLifting:true },
         { id:"TailW",    name:"Brass tail wheel (extra)",    max:2,    arm:4556,   step:0.5, nonLifting:true },
@@ -803,6 +779,20 @@ async function boot(){
   await DB.open();
   const stored = await DB.getKV("profile");
   State.profile = stored ? deepMerge(DEFAULT_PROFILE, stored) : clone(DEFAULT_PROFILE);
+
+  // schemaVersion 2 drops the 15 m configuration — this airframe is 18 m only.
+  // A profile stored before that still carries it and deepMerge would keep it,
+  // so retire any configuration the shipped profile no longer defines. One-off,
+  // gated on the version, so a configuration added later is left alone.
+  if (stored && (stored.schemaVersion || 1) < 2){
+    for (const k of Object.keys(State.profile.configurations))
+      if (!(k in DEFAULT_PROFILE.configurations)) delete State.profile.configurations[k];
+    State.profile.schemaVersion = DEFAULT_PROFILE.schemaVersion;
+    await DB.setKV("profile", State.profile);
+  }
+  // never leave activeConfig pointing at something that is not there
+  if (!State.profile.configurations[State.profile.activeConfig])
+    State.profile.activeConfig = Object.keys(State.profile.configurations)[0];
   // optional external profile file — lets you ship a different glider without touching the app
   try{
     const r = await fetch("js3-profile.json", { cache: "no-cache" });
@@ -856,11 +846,15 @@ function go(v){
 /* ---------- config picker ---------- */
 function buildConfigPicker(){
   const p = State.profile;
-  $("#cfgPick").innerHTML = Object.entries(p.configurations).map(([k,c]) =>
+  const el = $("#cfgPick");
+  // a single configuration leaves nothing to pick between
+  el.hidden = Object.keys(p.configurations).length < 2;
+  if (el.hidden){ el.innerHTML = ""; return; }
+  el.innerHTML = Object.entries(p.configurations).map(([k,c]) =>
     `<button data-cfg="${k}" aria-pressed="${k===p.activeConfig}"
       title="${c.enabled?c.label:"No weighing data for "+c.label+" yet"}"
       >${c.label}${c.enabled?"":" ·"}</button>`).join("");
-  $("#cfgPick").onclick = async (e) => {
+  el.onclick = async (e) => {
     const b = e.target.closest("button"); if (!b) return;
     State.profile.activeConfig = b.dataset.cfg;
     await DB.setKV("profile", State.profile);
