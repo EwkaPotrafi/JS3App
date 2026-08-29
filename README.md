@@ -45,26 +45,29 @@ Locally: `python3 -m http.server 8080`, then open `http://localhost:8080`.
 ### Deploying to the seedbox
 
 `.github/workflows/deploy.yml` ships the app to the seedbox on every push to
-`main`, serving it at <http://narvi.whatbox.ca:8790/js3/>.
+`main`, serving it at <http://narvi.whatbox.ca:8790/>.
 
 The deploy key there is pinned to a forced command that extracts a gzipped
 tarball from stdin into one fixed directory — it ignores whatever command the
-client asks for, which is why this is `tar | ssh` and not `rsync`, and why the
-`js3/` subdirectory has to be carried *inside* the archive rather than chosen
-with a flag.
+client asks for, which is why this is `tar | ssh` and not `rsync`.
 
-It needs one secret: **`SEEDBOX_DEPLOY_KEY`**, the same private key the
-`janskiairplane` repo uses. Settings -> Secrets and variables -> Actions.
+**The archive must extract flat**, with `index.html` at its top level. That
+directory is the nginx root, so a wrapper directory inside the archive puts
+`index.html` one level too deep and the site answers 403. A CI step runs
+`tar -tzf` and fails the build if `./index.html` is not at the archive root,
+because the symptom is a long way from the cause.
 
-Two caveats:
+It needs one secret: **`SEEDBOX_DEPLOY_KEY`**. Settings -> Secrets and
+variables -> Actions.
 
-- **Port 8790 is plain HTTP, so the service worker will not register there.**
-  The app runs, but not offline — which is the one thing it exists to do. Use
-  the GitHub Pages URL on the phone until the seedbox has TLS.
-- The app currently extracts *inside* the `janskiairplane` web root. If that
-  deploy is ever changed to clear its target directory first, it will take
-  `js3/` with it. A second deploy key with its own forced command would
-  separate them properly.
+This app has its own key, directory and port on the seedbox. It previously
+shared them with the Topaz tool, where each deploy replaced the whole target
+directory and so silently wiped whichever site had deployed last; that is
+resolved, and the two can no longer reach each other.
+
+**Port 8790 is plain HTTP, so the service worker will not register there.**
+The app runs, but not offline — which is the one thing it exists to do. Use
+the GitHub Pages URL on the phone until the seedbox has TLS.
 
 ### Install on iPhone
 Open the URL in **Safari** (not Chrome — on iOS only Safari can install a web

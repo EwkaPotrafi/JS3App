@@ -32,15 +32,28 @@ jobs:
             exit 1
           fi
 
-      # The seedbox deploy key is pinned to a forced command that extracts the
-      # tarball into one fixed directory, so the only way to target a
-      # subdirectory is to carry it inside the archive.
-      - name: Stage the app under js3/
+      # This repo now has its own deploy key, directory and port on the seedbox,
+      # and nginx serves that directory as the site root. The archive must
+      # therefore extract flat, with index.html at its top level: an extra
+      # wrapper directory would put index.html one level below the nginx root
+      # and the site would 403.
+      - name: Stage the app
         run: |
-          mkdir -p _site/js3
-          cp index.html js3-profile.json manifest.webmanifest sw.js _site/js3/
-          cp icon-180.png icon-192.png icon-512.png icon-maskable-512.png _site/js3/
+          mkdir -p _site
+          cp index.html js3-profile.json manifest.webmanifest sw.js _site/
+          cp icon-180.png icon-192.png icon-512.png icon-maskable-512.png _site/
           echo "Staged $(find _site -type f | wc -l) files, $(du -sh _site | cut -f1)."
+
+      # Catch a wrapper directory here rather than by staring at a 403.
+      - name: Check the archive extracts flat
+        run: |
+          tar -czf /tmp/deploy.tar.gz -C _site .
+          echo "Archive contains:"; tar -tzf /tmp/deploy.tar.gz | sed 's/^/  /'
+          if ! tar -tzf /tmp/deploy.tar.gz | grep -qx './index.html'; then
+            echo "::error::index.html is not at the top level of the archive."
+            exit 1
+          fi
+          echo "✓ index.html is at the archive root"
 
       - name: Write deploy key
         env:
@@ -65,7 +78,7 @@ jobs:
 
       - name: Verify the live site is actually this app
         run: |
-          url=http://narvi.whatbox.ca:8790/js3
+          url=http://narvi.whatbox.ca:8790
           body=$(curl -fsS --retry 3 --retry-delay 2 "$url/")
           # A 200 alone proves nothing — a stale page also returns 200.
           if ! grep -q "Weight &amp; Balance" <<<"$body"; then
